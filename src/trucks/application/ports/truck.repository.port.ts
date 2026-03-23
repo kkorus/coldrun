@@ -2,10 +2,9 @@ import { Injectable } from '@nestjs/common';
 import type {
   CreateTruckInput,
   ListTrucksCriteria,
-  Truck,
   TruckListResult,
-  UpdateTruckInput,
 } from '../../domain/truck';
+import { Truck } from '../../domain/truck';
 
 @Injectable()
 export abstract class TruckRepositoryPort {
@@ -17,7 +16,7 @@ export abstract class TruckRepositoryPort {
 
   abstract findMany(criteria: ListTrucksCriteria): Promise<TruckListResult>;
 
-  abstract update(id: string, input: UpdateTruckInput): Promise<Truck | null>;
+  abstract save(truck: Truck): Promise<Truck>;
 
   abstract deleteById(id: string): Promise<boolean>;
 }

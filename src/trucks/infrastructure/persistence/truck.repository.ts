@@ -2,16 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { QueryFilter } from 'mongoose';
 import { Model, SortOrder, Types } from 'mongoose';
-import { TruckRepositoryPort } from '../../application/ports/truck.repository.port';
+import { Truck } from '../../domain/truck';
 import type {
   CreateTruckInput,
   ListTrucksCriteria,
   ListTrucksSortField,
-  Truck,
   TruckListResult,
-  UpdateTruckInput,
 } from '../../domain/truck';
-import { mapTruckDocumentToDomain } from './truck.mapper';
+import { TruckRepositoryPort } from '../../application/ports/truck.repository.port';
+import { mapTruckDocumentToAggregate } from './truck.mapper';
 import type { TruckDocument } from './truck.schema';
 import { TruckModel } from './truck.schema';
 
@@ -57,21 +56,20 @@ export class TruckMongoRepository extends TruckRepositoryPort {
       status: input.status,
       description: input.description,
     });
-    return mapTruckDocumentToDomain(created);
+    return mapTruckDocumentToAggregate(created);
   }
 
   public async findById(id: string): Promise<Truck | null> {
     if (!isValidObjectId(id)) {
       return null;
     }
-
     const doc = await this.truckModel.findById(id).exec();
-    return doc ? mapTruckDocumentToDomain(doc) : null;
+    return doc ? mapTruckDocumentToAggregate(doc) : null;
   }
 
   public async findByCode(code: string): Promise<Truck | null> {
     const doc = await this.truckModel.findOne({ code }).exec();
-    return doc ? mapTruckDocumentToDomain(doc) : null;
+    return doc ? mapTruckDocumentToAggregate(doc) : null;
   }
 
   public async findMany(
@@ -89,51 +87,37 @@ export class TruckMongoRepository extends TruckRepositoryPort {
       this.truckModel.countDocuments(filter).exec(),
     ]);
     return {
-      items: docs.map((d) => mapTruckDocumentToDomain(d)),
+      items: docs.map((d) => mapTruckDocumentToAggregate(d)),
       total,
     };
   }
 
-  public async update(
-    id: string,
-    input: UpdateTruckInput,
-  ): Promise<Truck | null> {
-    if (!isValidObjectId(id)) {
-      return null;
-    }
-
-    const update: Record<string, unknown> = {};
-    if (input.code !== undefined) {
-      update.code = input.code;
-    }
-    if (input.name !== undefined) {
-      update.name = input.name;
-    }
-    if (input.status !== undefined) {
-      update.status = input.status;
-    }
-    if (input.description !== undefined) {
-      update.description = input.description;
-    }
-    if (Object.keys(update).length === 0) {
-      const existing = await this.findById(id);
-      return existing;
-    }
+  public async save(truck: Truck): Promise<Truck> {
     const doc = await this.truckModel
       .findByIdAndUpdate(
-        id,
-        { $set: update },
-        { new: true, runValidators: true },
+        truck.id,
+        {
+          $set: {
+            code: truck.code,
+            name: truck.name,
+            status: truck.status,
+            description: truck.description,
+          },
+        },
+        { returnDocument: 'after', runValidators: true },
       )
       .exec();
-    return doc ? mapTruckDocumentToDomain(doc) : null;
+
+    if (!doc) {
+      throw new Error(`Truck with id ${truck.id} not found during save`);
+    }
+    return mapTruckDocumentToAggregate(doc);
   }
 
   public async deleteById(id: string): Promise<boolean> {
     if (!isValidObjectId(id)) {
       return false;
     }
-
     const result = await this.truckModel.findByIdAndDelete(id).exec();
     return result !== null;
   }

@@ -1,19 +1,19 @@
-import type { TruckDocument } from './truck.schema';
-import type { Truck } from '../../domain/truck';
+import { Truck } from '../../domain/truck';
 import { isTruckStatus } from '../../domain/truck-status';
+import type { TruckDocument } from './truck.schema';
 
-export function mapTruckDocumentToDomain(doc: TruckDocument): Truck {
+export function mapTruckDocumentToAggregate(doc: TruckDocument): Truck {
   const status = doc.status;
   if (!isTruckStatus(status)) {
     throw new Error(`Invalid truck status persisted: ${String(status)}`);
   }
-  return {
-    id: doc._id.toHexString(),
-    code: doc.code,
-    name: doc.name,
+  return new Truck(
+    doc._id.toHexString(),
+    doc.code,
+    doc.name,
     status,
-    description: doc.description,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-  };
+    doc.description,
+    doc.createdAt,
+    doc.updatedAt,
+  );
 }
