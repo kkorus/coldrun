@@ -1,0 +1,48 @@
+services:
+  app:
+    image: node:24.10.0
+    command: sh -c "test -f node_modules/.bin/nest || npm install --no-audit --no-fund && npm run start:debug"
+    container_name: coldrun-app
+    working_dir: /usr/src/app
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./:/usr/src/app:delegated
+    env_file:
+      - .env
+    environment:
+      NPM_CONFIG_UPDATE_NOTIFIER: "false"
+    ports:
+      - 3000:3000
+      - 9229:9229
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mongo:7
+    container_name: coldrun-db
+    ports:
+      - 27017:27017
+    env_file:
+      - .env
+    environment:
+      - MONGO_INITDB_DATABASE=coldrun_db
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  mongo_data:
