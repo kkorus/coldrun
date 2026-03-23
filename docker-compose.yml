@@ -11,7 +11,7 @@ services:
     env_file:
       - .env
     environment:
-      NPM_CONFIG_UPDATE_NOTIFIER: "false"
+      NPM_CONFIG_UPDATE_NOTIFIER: 'false'
     ports:
       - 3000:3000
       - 9229:9229
@@ -22,6 +22,7 @@ services:
   db:
     image: mongo:7
     container_name: coldrun-db
+    command: ['mongod', '--quiet']
     ports:
       - 27017:27017
     env_file:
@@ -32,13 +33,7 @@ services:
       - mongo_data:/data/db
     healthcheck:
       test:
-        [
-          "CMD",
-          "mongosh",
-          "--quiet",
-          "--eval",
-          "db.adminCommand('ping').ok",
-        ]
+        ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
       interval: 5s
       timeout: 5s
       retries: 10
