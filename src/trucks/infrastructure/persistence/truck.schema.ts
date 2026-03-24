@@ -5,16 +5,16 @@ import { TRUCK_STATUSES } from '../../domain/truck-status';
 @Schema({ collection: 'trucks', timestamps: true })
 export class TruckModel {
   @Prop({ required: true, unique: true, index: true })
-  code!: string;
+  public code!: string;
 
   @Prop({ required: true })
-  name!: string;
+  public name!: string;
 
   @Prop({ required: true, enum: TRUCK_STATUSES, type: String })
-  status!: string;
+  public status!: string;
 
   @Prop({ required: false })
-  description?: string;
+  public description?: string;
 }
 
 export type TruckDocument = HydratedDocument<TruckModel> & {
