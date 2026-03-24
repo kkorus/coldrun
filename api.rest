@@ -1,0 +1,224 @@
+### Ping trucks
+GET http://localhost:3000/trucks/ping HTTP/1.1
+
+###
+
+### List trucks - default (first page)
+GET http://localhost:3000/trucks HTTP/1.1
+
+###
+
+### List trucks - with pagination
+GET http://localhost:3000/trucks?skip=0&limit=10&sortField=createdAt&sortOrder=desc HTTP/1.1
+
+###
+
+### List trucks - filter by status: Loading
+GET http://localhost:3000/trucks?status=Loading HTTP/1.1
+
+###
+
+### List trucks - filter by status: OutOfService
+GET http://localhost:3000/trucks?status=OutOfService HTTP/1.1
+
+###
+
+### List trucks - filter by status: ToJob
+GET http://localhost:3000/trucks?status=ToJob HTTP/1.1
+
+###
+
+### List trucks - filter by status: AtJob
+GET http://localhost:3000/trucks?status=AtJob HTTP/1.1
+
+###
+
+### List trucks - filter by status: Returning
+GET http://localhost:3000/trucks?status=Returning HTTP/1.1
+
+###
+
+### List trucks - search by code
+GET http://localhost:3000/trucks?codeContains=TRK HTTP/1.1
+
+###
+
+### List trucks - search by name
+GET http://localhost:3000/trucks?nameContains=Refrigerated HTTP/1.1
+
+###
+
+### List trucks - sort by code ascending
+GET http://localhost:3000/trucks?sortField=code&sortOrder=asc HTTP/1.1
+
+###
+
+### List trucks - sort by name descending
+GET http://localhost:3000/trucks?sortField=name&sortOrder=desc HTTP/1.1
+
+###
+
+### List trucks - sort by status ascending
+GET http://localhost:3000/trucks?sortField=status&sortOrder=asc HTTP/1.1
+
+###
+
+### List trucks - sort by updatedAt descending
+GET http://localhost:3000/trucks?sortField=updatedAt&sortOrder=desc HTTP/1.1
+
+###
+
+### List trucks - combined filters
+GET http://localhost:3000/trucks?status=Loading&nameContains=unit&sortField=createdAt&sortOrder=desc&skip=0&limit=5 HTTP/1.1
+
+###
+
+### Get truck by id
+GET http://localhost:3000/trucks/69c2db701d373aca0dab9f87 HTTP/1.1
+
+###
+
+### Create truck - status Loading
+POST http://localhost:3000/trucks HTTP/1.1
+content-type: application/json
+
+{
+    "code": "TRK001",
+    "name": "Refrigerated unit A",
+    "status": "Loading",
+    "description": "Main refrigerated unit"
+}
+
+###
+
+### Create truck - status OutOfService, no description
+POST http://localhost:3000/trucks HTTP/1.1
+content-type: application/json
+
+{
+    "code": "TRK002",
+    "name": "Freezer unit B",
+    "status": "OutOfService"
+}
+
+###
+
+### Create truck - status ToJob
+POST http://localhost:3000/trucks HTTP/1.1
+content-type: application/json
+
+{
+    "code": "TRK003",
+    "name": "Dry cargo C",
+    "status": "ToJob",
+    "description": "Dry cargo transport"
+}
+
+###
+
+### Create truck - validation error: missing required fields
+POST http://localhost:3000/trucks HTTP/1.1
+content-type: application/json
+
+{
+    "code": "TRK004"
+}
+
+###
+
+### Create truck - validation error: invalid status
+POST http://localhost:3000/trucks HTTP/1.1
+content-type: application/json
+
+{
+    "code": "TRK005",
+    "name": "Invalid status truck",
+    "status": "InvalidStatus"
+}
+
+###
+
+### Create truck - validation error: code with special chars
+POST http://localhost:3000/trucks HTTP/1.1
+content-type: application/json
+
+{
+    "code": "TRK-005",
+    "name": "Bad code truck",
+    "status": "Loading"
+}
+
+###
+
+### Update truck - change status only
+PATCH http://localhost:3000/trucks/69c2db701d373aca0dab9f87 HTTP/1.1
+content-type: application/json
+
+{
+    "status": "AtJob"
+}
+
+###
+
+### Update truck - change name only
+PATCH http://localhost:3000/trucks/507f1f77bcf86cd799439011 HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Updated refrigerated unit A"
+}
+
+###
+
+### Update truck - change code only
+PATCH http://localhost:3000/trucks/507f1f77bcf86cd799439011 HTTP/1.1
+content-type: application/json
+
+{
+    "code": "TRK099"
+}
+
+###
+
+### Update truck - update description
+PATCH http://localhost:3000/trucks/507f1f77bcf86cd799439011 HTTP/1.1
+content-type: application/json
+
+{
+    "description": "New description after update"
+}
+
+###
+
+### Update truck - all fields at once
+PATCH http://localhost:3000/trucks/507f1f77bcf86cd799439011 HTTP/1.1
+content-type: application/json
+
+{
+    "code": "TRK010",
+    "name": "Fully updated truck",
+    "status": "Returning",
+    "description": "Updated all fields"
+}
+
+###
+
+### Update truck - not found (invalid id)
+PATCH http://localhost:3000/trucks/000000000000000000000000 HTTP/1.1
+content-type: application/json
+
+{
+    "status": "Loading"
+}
+
+###
+
+### Delete truck
+DELETE http://localhost:3000/trucks/69c2db701d373aca0dab9f87 HTTP/1.1
+
+###
+
+### Delete truck - not found (invalid id)
+DELETE http://localhost:3000/trucks/000000000000000000000000 HTTP/1.1
+
+###

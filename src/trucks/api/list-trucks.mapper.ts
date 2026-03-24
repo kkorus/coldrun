@@ -9,7 +9,6 @@ export function listTrucksQueryDtoToCriteria(
     dto.codeContains !== undefined && dto.codeContains.length > 0
       ? dto.codeContains
       : undefined;
-
   const nameContains =
     dto.nameContains !== undefined && dto.nameContains.length > 0
       ? dto.nameContains

@@ -1,6 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import type { Truck } from '../../domain/truck';
+import { DuplicateTruckCodeError } from '../../domain/truck.errors';
 import { TruckRepositoryPort } from '../ports/truck.repository.port';
 import { CreateTruckCommand } from './create-truck.command';
 
@@ -19,11 +20,18 @@ export class CreateTruckHandler implements ICommandHandler<
       );
     }
 
-    return this.truckRepository.create({
-      code: command.code,
-      name: command.name,
-      status: command.status,
-      description: command.description,
-    });
+    try {
+      return await this.truckRepository.create({
+        code: command.code,
+        name: command.name,
+        status: command.status,
+        description: command.description,
+      });
+    } catch (e) {
+      if (e instanceof DuplicateTruckCodeError) {
+        throw new ConflictException(e.message);
+      }
+      throw e;
+    }
   }
 }

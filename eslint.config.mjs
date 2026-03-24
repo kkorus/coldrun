@@ -26,7 +26,7 @@ export default tseslint.config(
   },
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
       '@typescript-eslint/explicit-function-return-type': [
@@ -39,6 +39,13 @@ export default tseslint.config(
         },
       ],
       "prettier/prettier": ["error", { endOfLine: "auto" }],
+    },
+  },
+  {
+    files: ['**/*.spec.ts', '**/*.e2e-spec.ts'],
+    rules: {
+      // jest.fn() mocks don't have a binding issue — unbound-method false-positives
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
 );

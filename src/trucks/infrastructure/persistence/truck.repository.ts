@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { isObjectIdHexString } from '../../../common/is-object-id-string';
 import type { QueryFilter } from 'mongoose';
-import { Model, SortOrder, Types } from 'mongoose';
+import { Model, SortOrder } from 'mongoose';
 import { Truck } from '../../domain/truck';
 import type {
   CreateTruckInput,
@@ -9,8 +10,13 @@ import type {
   ListTrucksSortField,
   TruckListResult,
 } from '../../domain/truck';
+import {
+  DuplicateTruckCodeError,
+  TruckNotFoundForSaveError,
+} from '../../domain/truck.errors';
 import { TruckRepositoryPort } from '../../application/ports/truck.repository.port';
 import { mapTruckDocumentToAggregate } from './truck.mapper';
+import { isDuplicateKeyErrorOnField } from './mongo-duplicate-key';
 import type { TruckDocument } from './truck.schema';
 import { TruckModel } from './truck.schema';
 
@@ -19,7 +25,7 @@ function escapeRegex(input: string): string {
 }
 
 function isValidObjectId(id: string): boolean {
-  return Types.ObjectId.isValid(id);
+  return isObjectIdHexString(id);
 }
 
 function buildSort(
@@ -50,13 +56,20 @@ export class TruckMongoRepository extends TruckRepositoryPort {
   }
 
   public async create(input: CreateTruckInput): Promise<Truck> {
-    const created = await this.truckModel.create({
-      code: input.code,
-      name: input.name,
-      status: input.status,
-      description: input.description,
-    });
-    return mapTruckDocumentToAggregate(created);
+    try {
+      const created = await this.truckModel.create({
+        code: input.code,
+        name: input.name,
+        status: input.status,
+        description: input.description,
+      });
+      return mapTruckDocumentToAggregate(created);
+    } catch (e: unknown) {
+      if (isDuplicateKeyErrorOnField(e, 'code')) {
+        throw new DuplicateTruckCodeError(input.code);
+      }
+      throw e;
+    }
   }
 
   public async findById(id: string): Promise<Truck | null> {
@@ -93,25 +106,46 @@ export class TruckMongoRepository extends TruckRepositoryPort {
   }
 
   public async save(truck: Truck): Promise<Truck> {
-    const doc = await this.truckModel
-      .findByIdAndUpdate(
-        truck.id,
-        {
-          $set: {
-            code: truck.code,
-            name: truck.name,
-            status: truck.status,
-            description: truck.description,
-          },
-        },
-        { returnDocument: 'after', runValidators: true },
-      )
-      .exec();
+    try {
+      const $set: {
+        code: string;
+        name: string;
+        status: string;
+        description?: string;
+      } = {
+        code: truck.code,
+        name: truck.name,
+        status: truck.status,
+      };
+      if (truck.description !== undefined) {
+        $set.description = truck.description;
+      }
 
-    if (!doc) {
-      throw new Error(`Truck with id ${truck.id} not found during save`);
+      const update: Record<string, unknown> = { $set };
+      if (truck.description === undefined) {
+        update.$unset = { description: '' };
+      }
+
+      const doc = await this.truckModel
+        .findByIdAndUpdate(truck.id, update, {
+          returnDocument: 'after',
+          runValidators: true,
+        })
+        .exec();
+
+      if (!doc) {
+        throw new TruckNotFoundForSaveError(truck.id);
+      }
+      return mapTruckDocumentToAggregate(doc);
+    } catch (e: unknown) {
+      if (e instanceof TruckNotFoundForSaveError) {
+        throw e;
+      }
+      if (isDuplicateKeyErrorOnField(e, 'code')) {
+        throw new DuplicateTruckCodeError(truck.code);
+      }
+      throw e;
     }
-    return mapTruckDocumentToAggregate(doc);
   }
 
   public async deleteById(id: string): Promise<boolean> {
@@ -129,15 +163,15 @@ export class TruckMongoRepository extends TruckRepositoryPort {
       return {};
     }
     const query: QueryFilter<TruckDocument> = {};
-    if (filter.status !== undefined) {
+    if (filter.status) {
       query.status = filter.status;
     }
-    if (filter.codeContains !== undefined && filter.codeContains.length > 0) {
+    if (filter.codeContains && filter.codeContains.length > 0) {
       query.code = {
         $regex: new RegExp(escapeRegex(filter.codeContains), 'i'),
       };
     }
-    if (filter.nameContains !== undefined && filter.nameContains.length > 0) {
+    if (filter.nameContains && filter.nameContains.length > 0) {
       query.name = {
         $regex: new RegExp(escapeRegex(filter.nameContains), 'i'),
       };

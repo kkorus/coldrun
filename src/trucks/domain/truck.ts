@@ -66,7 +66,7 @@ export class Truck {
   }
 
   public updateDescription(description: string | undefined): void {
-    this.description = description;
+    this.description = description?.trim() === '' ? undefined : description;
   }
 
   public changeCode(code: string): void {
@@ -74,19 +74,27 @@ export class Truck {
   }
 
   private isValidTransition(from: TruckStatus, to: TruckStatus): boolean {
-    if (from === to) return false;
-    if (to === TruckStatus.OUT_OF_SERVICE) return true;
-    if (from === TruckStatus.OUT_OF_SERVICE) return true;
+    if (from === to) {
+      return false;
+    }
+    if (to === TruckStatus.OUT_OF_SERVICE) {
+      return true;
+    }
+    if (from === TruckStatus.OUT_OF_SERVICE) {
+      return true;
+    }
 
     const fromIdx = TRANSITION_SEQUENCE.indexOf(from);
     const toIdx = TRANSITION_SEQUENCE.indexOf(to);
 
-    if (fromIdx === -1 || toIdx === -1) return false;
+    if (fromIdx === -1 || toIdx === -1) {
+      return false;
+    }
 
     if (from === TruckStatus.RETURNING && to === TruckStatus.LOADING) {
       return true;
+    } else {
+      return toIdx === fromIdx + 1;
     }
-
-    return toIdx === fromIdx + 1;
   }
 }

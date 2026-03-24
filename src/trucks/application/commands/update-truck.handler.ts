@@ -4,8 +4,12 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Truck } from '../../domain/truck';
-import { InvalidStatusTransitionError } from '../../domain/truck.errors';
+import type { Truck } from '../../domain/truck';
+import {
+  DuplicateTruckCodeError,
+  InvalidStatusTransitionError,
+  TruckNotFoundForSaveError,
+} from '../../domain/truck.errors';
 import { TruckRepositoryPort } from '../ports/truck.repository.port';
 import { UpdateTruckCommand } from './update-truck.command';
 
@@ -51,6 +55,16 @@ export class UpdateTruckHandler implements ICommandHandler<
       truck.updateDescription(command.description);
     }
 
-    return this.truckRepository.save(truck);
+    try {
+      return await this.truckRepository.save(truck);
+    } catch (e) {
+      if (e instanceof DuplicateTruckCodeError) {
+        throw new ConflictException(e.message);
+      }
+      if (e instanceof TruckNotFoundForSaveError) {
+        throw new NotFoundException(`Truck with id ${command.id} not found`);
+      }
+      throw e;
+    }
   }
 }
