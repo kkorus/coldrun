@@ -14,6 +14,8 @@ export type TruckResponseDto = {
 export type ListTrucksResponseDto = {
   readonly items: readonly TruckResponseDto[];
   readonly total: number;
+  readonly skip: number;
+  readonly limit: number;
 };
 
 export function toTruckResponseDto(truck: Truck): TruckResponseDto {
@@ -30,9 +32,13 @@ export function toTruckResponseDto(truck: Truck): TruckResponseDto {
 
 export function toListTrucksResponseDto(
   result: TruckListResult,
+  skip: number,
+  limit: number,
 ): ListTrucksResponseDto {
   return {
     items: result.items.map((t) => toTruckResponseDto(t)),
     total: result.total,
+    skip,
+    limit,
   };
 }

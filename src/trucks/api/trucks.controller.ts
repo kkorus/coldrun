@@ -21,6 +21,7 @@ import {
   PingTrucksQuery,
   type PingTrucksResult,
 } from '../application/queries/ping-trucks.query';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 import { CreateTruckDto } from './dto/create-truck.dto';
 import { ListTrucksQueryDto } from './dto/list-trucks-query.dto';
 import { UpdateTruckDto } from './dto/update-truck.dto';
@@ -55,12 +56,12 @@ export class TrucksController {
       ListTrucksQuery,
       TruckListResult
     >(new ListTrucksQuery(criteria));
-    return toListTrucksResponseDto(result);
+    return toListTrucksResponseDto(result, criteria.skip, criteria.limit);
   }
 
   @Get(':id')
   public async getTruckById(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
   ): Promise<TruckResponseDto> {
     const truck = await this.queryBus.execute<GetTruckByIdQuery, Truck>(
       new GetTruckByIdQuery(id),
@@ -81,7 +82,7 @@ export class TrucksController {
 
   @Patch(':id')
   public async updateTruck(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() dto: UpdateTruckDto,
   ): Promise<TruckResponseDto> {
     const truck = await this.commandBus.execute<UpdateTruckCommand, Truck>(
@@ -98,7 +99,9 @@ export class TrucksController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  public async deleteTruck(@Param('id') id: string): Promise<void> {
+  public async deleteTruck(
+    @Param('id', ParseObjectIdPipe) id: string,
+  ): Promise<void> {
     await this.commandBus.execute<DeleteTruckCommand, void>(
       new DeleteTruckCommand(id),
     );
