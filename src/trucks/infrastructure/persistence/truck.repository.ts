@@ -76,6 +76,7 @@ export class TruckMongoRepository extends TruckRepositoryPort {
     if (!isValidObjectId(id)) {
       return null;
     }
+
     const doc = await this.truckModel.findById(id).exec();
     return doc ? mapTruckDocumentToAggregate(doc) : null;
   }

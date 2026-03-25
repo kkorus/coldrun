@@ -1,7 +1,7 @@
 services:
   app:
     image: node:24.10.0
-    command: sh -c "test -f node_modules/.bin/nest || npm install --no-audit --no-fund && npm run start:debug"
+    command: sh -c "test -f node_modules/.bin/nest || npm install --no-audit --no-fund && npm run start:debug:docker"
     container_name: coldrun-app
     working_dir: /usr/src/app
     tty: true
